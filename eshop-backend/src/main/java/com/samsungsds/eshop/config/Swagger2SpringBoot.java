@@ -1,13 +1,9 @@
-package com.samsungsds.eshop;
+package com.samsungsds.eshop.config;
 
 import org.springframework.context.annotation.Bean;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
@@ -39,11 +35,4 @@ public class Swagger2SpringBoot {
                 .licenseUrl("http://unlicense.org")
                 .build();
     }
-
-    @ApiOperation(value = "Get a greeting message")
-    @GetMapping("/greet/{name}")
-    public String greet(@ApiParam(value = "Name to greet", required = true) @PathVariable String name) {
-        return "Hello, " + name + "!";
-    }
-
 }
