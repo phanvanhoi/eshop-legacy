@@ -2,6 +2,15 @@ package com.samsungsds.eshop.order;
 
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.google.common.collect.Iterables;
 import com.samsungsds.eshop.cart.CartItem;
 import com.samsungsds.eshop.cart.CartService;
@@ -14,20 +23,8 @@ import com.samsungsds.eshop.shipping.ShippingRequest;
 import com.samsungsds.eshop.shipping.ShippingResult;
 import com.samsungsds.eshop.shipping.ShippingService;
 
-import io.swagger.annotations.Api; //👈👈  add line
-import io.swagger.annotations.ApiOperation; //👈👈  add line
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 @RestController
 @RequestMapping(value = "/api/checkouts")
-@Api(tags = "주문", description = "주문 관련 API") //👈👈  add line
 public class OrderController {
     private final Logger logger = LoggerFactory.getLogger(OrderController.class);
     private final OrderService orderService;
@@ -35,21 +32,23 @@ public class OrderController {
     private final CartService cartService;
     private final PaymentService paymentService;
     private final ProductService productService;
+    private final RabbitTemplate rabbitTemplate; 
 
     public OrderController(final OrderService orderService, 
     final ShippingService shippingService,
     final  PaymentService paymentService,
     final CartService cartService,
-    final ProductService productService) {
+    final ProductService productService,
+    final RabbitTemplate rabbitTemplate) {
         this.orderService = orderService;
         this.shippingService = shippingService;
         this.paymentService = paymentService;
         this.cartService = cartService;
         this.productService = productService;
+        this.rabbitTemplate = rabbitTemplate; 
     }
 
     @PostMapping(value = "/orders")
-    @ApiOperation(value = "주문 생성") //👈👈  add line
     public ResponseEntity<OrderResult> placeOrder(@RequestBody OrderRequest orderRequest) {
         logger.info("placeOrder : " + orderRequest);
 
@@ -83,7 +82,10 @@ public class OrderController {
         String orderId = orderService.createOrderId(orderRequest);
 
         // 카트 비우기
-        cartService.emptyCart();
+        // cartService.emptyCart();
+
+        //Publish event (add)
+        rabbitTemplate.convertAndSend("eshop-exchange","order.placed", new OrderPlaced(orderId));
         return ResponseEntity.ok(new OrderResult(orderId, shippingResult.getShippingTrackingId(),
                 shippingResult.getShippingCost(), totalCost));
     }

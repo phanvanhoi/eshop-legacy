@@ -1,16 +1,8 @@
 plugins {
-     id 'org.springframework.boot' version '2.2.6.RELEASE'
-     id 'io.spring.dependency-management' version '1.0.9.RELEASE'
-     id 'java'
-     id 'com.google.cloud.tools.jib' version '2.7.0'
-         // Asciidoctor 적용
-    id 'org.asciidoctor.jvm.convert' version '3.3.2' //👈👈  add line
-}
-
-jib{
-     container {
-         creationTime = 'USE_CURRENT_TIMESTAMP'
-     }
+    id 'org.springframework.boot' version '2.2.6.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    id 'java'
+    id 'com.google.cloud.tools.jib' version '2.7.0'
 }
 
 group = 'com.samsungsds'
@@ -18,7 +10,6 @@ version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '11'
 
 configurations {
-    asciidoctorExtensions // dependencies 에서 적용한 것 추가
     developmentOnly
     runtimeClasspath {
         extendsFrom developmentOnly
@@ -30,66 +21,17 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'    
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.postgresql:postgresql'
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'    
+    implementation 'org.springframework.boot:spring-boot-starter-web'   
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'   
     implementation 'com.google.guava:guava:28.2-jre'
-    implementation 'io.springfox:springfox-boot-starter:3.0.0'  
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.junit.platform:junit-platform-engine:1.8.2'
-    testImplementation 'org.junit.platform:junit-platform-commons:1.8.2'
-    
-    // mockMvc를 사용해서 snippets를 추출
-    testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc' //👈👈  add line
-
-    // 병합된 .adoc파일을 HTML로 export
-    asciidoctorExtensions 'org.springframework.restdocs:spring-restdocs-asciidoctor' //👈👈  add line
-
-    // Json 관련 작업을 위한 라이브러리 추가.
-    implementation 'com.google.code.gson:gson' //👈👈  add line
-}
-
-ext { //👈👈  add line
-    snippetsDir = file('build/generated-snippets')
-}
-
-asciidoctor { //👈👈  add line asciidoctor 작업 명시
-    inputs.dir snippetsDir
-    configurations 'asciidoctorExtensions' // configuration 적용
-    dependsOn test
-    sources{
-        include("**/index.adoc","**/common/*.adoc")
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
+ 
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
-    baseDirFollowsSourceFile()
-}
-
-// static/docs 폴더 비우기 -> 초기화 작업
-asciidoctor.doFirst { //👈👈  add line
-    delete file('src/main/resources/static/docs')
-}
-
-// 작업 이후 생성된 HTML 파일을 static/docs 로 복사
-task copyDocument(type: Copy) { //👈👈 add line - copyDocument 작업 명시
-    dependsOn asciidoctor
-    from file("build/docs/asciidoc")
-    into file("src/main/resources/static/docs")
-}
-
-bootRun { //👈👈 add line - bootRun 의 의존작업 명시
-    dependsOn copyDocument
-}
-
-//👈👈 add line - build 의 의존작업 명시
-build {
-    dependsOn copyDocument
 }
 
 test {
-    outputs.dir snippetsDir //👈👈 add line - snippets 생성 경로 정의
     useJUnitPlatform()
 }
-

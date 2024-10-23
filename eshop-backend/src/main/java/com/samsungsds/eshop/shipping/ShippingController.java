@@ -11,12 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import io.swagger.annotations.Api; //👈👈  add line
-import io.swagger.annotations.ApiOperation; //👈👈  add line
-
 @RestController
 @RequestMapping(value="/api/checkouts/shippings")
-@Api(tags = "배송비", description = "배송비 관련 API") //👈👈  add line
 public class ShippingController {
     private final Logger logger = LoggerFactory.getLogger(ShippingController.class);
     private final ShippingService shippingService;
@@ -26,7 +22,6 @@ public class ShippingController {
     }
 
     @PostMapping(value = "/cost")
-    @ApiOperation(value = "배송비 조회") //👈👈  add line
     public ResponseEntity<Money> calculateShippingCost(@RequestBody List<ShippingItem> shippingList) {
         logger.info("calculateShippingCost");
         int itemCount = shippingList.stream()
