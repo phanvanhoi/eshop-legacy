@@ -22,14 +22,7 @@ spec:
       steps {
         container(name: 'kaniko', shell: '/busybox/sh') {
           dir('eshop-frontend') {
-            // Set up the environment variable CRED from the ConfigMap
-            script {
-              // Export the credentials to a temporary file
-              sh '''
-                echo $CRED > /kaniko/ecr_credentials.json
-              '''
-            }
-            // Build and push with Kaniko
+            env['CRED'] = "${CREDENTIAL_JSON}"
             sh '''#!/busybox/sh
             /kaniko/executor \
             --git branch=main \
