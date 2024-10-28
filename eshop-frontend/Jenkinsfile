@@ -20,7 +20,7 @@ spec:
   stages {
     stage('Build with Kaniko') {
       steps {
-        container(name: 'kaniko', shell: '/busybox/sh') {
+        container(name: 'eshop-frontend', shell: '/busybox/sh') {
           dir('eshop-frontend') {
             env['CRED'] = "${CREDENTIAL_JSON}"
             sh '''#!/busybox/sh
