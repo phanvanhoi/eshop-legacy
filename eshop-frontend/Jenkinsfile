@@ -1,61 +1,36 @@
 pipeline {
-    agent {
-        kubernetes {
-            label 'kaniko'
-            defaultContainer 'jnlp' // Use the default Jenkins agent container
-            yaml """
-            apiVersion: v1
-            kind: Pod
-            metadata:
-              labels:
-                some-label: kaniko
-            spec:
-              containers:
-              - name: kaniko
-                image: gcr.io/kaniko-project/executor:latest
-                args: ["--no-pull", "--cache=true"]
-                volumeMounts:
-                - name: kaniko-secret
-                  mountPath: /kaniko/.docker/
-              volumes:
-              - name: kaniko-secret
-                secret:
-                  secretName: ecr-secret # Name of the Kubernetes secret for ECR credentials
-            """
-        }
+  agent {
+    kubernetes {
+      yaml '''
+kind: Pod
+spec:
+  containers:
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:debug
+    imagePullPolicy: Always
+    command:
+    - /busybox/cat
+    tty: true
+'''
     }
-    environment {
-        AWS_REGION = 'us-west-1' // Set your AWS region
-        ECR_REPO = '566478607909.dkr.ecr.us-east-1.amazonaws.com' // Set your ECR repository name
-        IMAGE_NAME = 'eshop-frontend' // Set your image name
-        IMAGE_TAG = "0.0.1" // You can use a dynamic tag if needed
+  }
+  environment {
+    IMAGE_REGISTRY = '566478607909.dkr.ecr.us-east-1.amazonaws.com'
+  }
+  stages {
+    stage('Build with Kaniko') {
+      steps {
+        container(name: 'kaniko', shell: '/busybox/sh') {
+          dir('eshop-frontend') {
+            sh '''#!/busybox/sh
+            /kaniko/executor \
+            --git branch=feature-c1 \
+            --context=. \
+            --destination=${IMAGE_REGISTRY}/eshop-frontend:0.0.1
+            '''
+          }
+        }
+      }
     }
-    stages {
-        stage('Build Image with Kaniko') {
-            steps {
-                script {
-                    // Set up Docker config with ECR credentials
-                    sh '''
-                    echo "{\"auths\":{\"${ECR_REPO}\":{\"username\":\"AWS\",\"password\":\"$(aws ecr get-login-password --region ${AWS_REGION})\"}}}" > /kaniko/.docker/config.json
-
-                    /kaniko/executor --context=dir:///path/to/your/context \
-                                     --dockerfile=/path/to/your/Dockerfile \
-                                     --destination=${ECR_REPO}/${IMAGE_NAME}:${IMAGE_TAG} \
-                                     --oci-layout-path=/kaniko/oci
-                    '''
-                }
-            }
-        }
-    }
-    post {
-        always {
-            echo 'Cleaning up...'
-        }
-        success {
-            echo 'Build and push succeeded!'
-        }
-        failure {
-            echo 'Build or push failed!'
-        }
-    }
+  }
 }
