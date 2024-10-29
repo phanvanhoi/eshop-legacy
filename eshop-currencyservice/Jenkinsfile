@@ -11,13 +11,6 @@ spec:
     command:
     - /busybox/cat
     tty: true
-    env:
-    # Define the environment variable
-      - name: CRED
-        valueFrom:
-          configMapKeyRef:
-            name: jenkinscred
-            key: ECR_CREDENTIAL_JSON
 '''
     }
   }
