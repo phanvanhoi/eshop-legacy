@@ -1,0 +1,43 @@
+pipeline {
+  agent {
+    kubernetes {
+      yaml '''
+kind: Pod
+spec:
+  containers:
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:debug
+    imagePullPolicy: Always
+    command:
+    - /busybox/cat
+    tty: true
+    env:
+    # Define the environment variable
+      - name: CRED
+        valueFrom:
+          configMapKeyRef:
+            name: jenkinscred
+            key: ECR_CREDENTIAL_JSON
+'''
+    }
+  }
+  environment {
+    IMAGE_REGISTRY = '566478607909.dkr.ecr.us-east-1.amazonaws.com'
+  }
+  stages {
+    stage('Build with Kaniko') {
+      steps {
+        container(name: 'kaniko', shell: '/busybox/sh') {
+          dir('eshop-currencyservice') {
+            sh '''#!/busybox/sh
+            /kaniko/executor \
+            --git branch=feature-c1 \
+            --context=. \
+            --destination=${IMAGE_REGISTRY}/eshop-currencyservice:0.0.1
+            '''
+          }
+        }
+      }
+    }
+  }
+}
